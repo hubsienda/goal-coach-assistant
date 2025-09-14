@@ -315,18 +315,18 @@ User Context: ${userContext || 'New conversation'}`;
 
         {/* Quick Commands */}
         <div className="p-4 border-b border-gray-700">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Quick Commands</h3>
-          <div className="space-y-2">
-            {quickCommands.map((cmd, index) => (
+          <h3 className="text-sm font-medium text-gray-400 mb-2">Quick Commands</h3>
+          <div className="space-y-1">
+            {quickCommands.slice(0, 3).map((cmd, index) => (
               <button
                 key={index}
                 onClick={() => {
                   setInput(cmd.command + ' ');
                   setSidebarOpen(false);
                 }}
-                className="w-full text-left p-2 rounded-lg hover:bg-gray-800 transition-colors group"
+                className="w-full text-left p-2 rounded hover:bg-gray-800 transition-colors group"
               >
-                <div className="text-[#00CFFF] text-sm font-mono">{cmd.command}</div>
+                <div className="text-[#00CFFF] text-xs font-mono">{cmd.command}</div>
                 <div className="text-gray-400 text-xs">{cmd.description}</div>
               </button>
             ))}
