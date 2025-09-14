@@ -324,14 +324,24 @@ export default function Home() {
                       {message.role === 'user' ? <User className="w-4 h-4" /> : <span className="font-bold text-sm">G</span>}
                     </div>
                     
-                    {/* Message Bubble */}
-                    <div className={`px-4 py-3 rounded-2xl ${
-                      message.role === 'user'
-                        ? 'bg-[#FFD60A] text-[#0D1B2A] rounded-br-sm'
-                        : 'bg-gray-800 text-white rounded-bl-sm'
-                    }`}>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    </div>
+                    {/* Message Bubble or Goal Card */}
+                    {message.type === 'goal-created' ? (
+                      <div className="bg-gradient-to-r from-[#00CFFF]/20 to-[#FFD60A]/20 border border-[#00CFFF]/30 rounded-2xl p-4 max-w-md">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Target className="w-5 h-5 text-[#00CFFF]" />
+                          <span className="text-[#00CFFF] font-medium text-sm">Goal Created!</span>
+                        </div>
+                        <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                      </div>
+                    ) : (
+                      <div className={`px-4 py-3 rounded-2xl ${
+                        message.role === 'user'
+                          ? 'bg-[#FFD60A] text-[#0D1B2A] rounded-br-sm'
+                          : 'bg-gray-800 text-white rounded-bl-sm'
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
