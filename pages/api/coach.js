@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
     console.log('Making OpenAI API call...');
 
-    const systemPrompt = `You are an experienced life and career coach assistant. Your role is to:
+    const finalSystemPrompt = systemPrompt || `You are an experienced life and career coach assistant. Your role is to:
 
 1. Help users clarify and refine their goals
 2. Break down large goals into actionable steps
@@ -56,10 +56,10 @@ User Context: ${userContext || 'New conversation'}`;
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: finalSystemPrompt },
         ...messages
       ],
-      max_tokens: 500,
+      max_tokens: maxTokens || 500,
       temperature: 0.7,
     });
 
