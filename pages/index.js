@@ -434,45 +434,42 @@ User Context: ${userContext || 'New conversation'}`;
         <div className="flex-1 overflow-y-auto bg-[#0D1B2A]">
           {messages.length === 0 ? (
             /* Welcome Screen */
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-[#00CFFF] rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <span className="text-[#0D1B2A] font-bold text-3xl">G</span>
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-[#00CFFF] rounded-full flex items-center justify-center mb-3 mx-auto">
+                  <span className="text-[#0D1B2A] font-bold text-2xl">G</span>
                 </div>
-                <h2 className="text-2xl font-bold text-[#00CFFF] mb-2">Welcome to GOALVERSE</h2>
-                <p className="text-gray-400 max-w-md">
-                  Your personal AI coach to help you clarify goals, create action plans, and stay motivated on your journey to success.
-                </p>
-                <p className="text-[#FFD60A] text-sm mt-2 font-medium">Because progress needs direction.</p>
+                <h2 className="text-xl font-bold text-[#00CFFF] mb-1">Let's achieve your goals!</h2>
+                <p className="text-[#FFD60A] text-sm font-medium">Because progress needs direction.</p>
               </div>
 
               {/* User Context Input */}
-              <div className="w-full max-w-2xl mb-8">
-                <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
-                    Tell me about yourself (optional - helps me give better advice):
+              <div className="w-full max-w-2xl mb-6">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Tell me about yourself (optional):
                   </label>
                   <textarea
                     value={userContext}
                     onChange={(e) => setUserContext(e.target.value)}
-                    placeholder="e.g., I'm a software developer, working remotely, looking to improve work-life balance and learn new skills..."
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400"
-                    rows={3}
+                    placeholder="e.g., I'm a software developer looking to improve work-life balance..."
+                    className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400"
+                    rows={2}
                   />
                 </div>
               </div>
 
               {/* Conversation Starters */}
               <div className="w-full max-w-2xl">
-                <h3 className="text-gray-400 text-sm mb-4">Try asking about:</h3>
-                <div className="grid gap-3">
+                <h3 className="text-gray-400 text-sm mb-3">Try asking about:</h3>
+                <div className="grid gap-2">
                   {conversationStarters.map((starter, index) => (
                     <button
                       key={index}
                       onClick={() => setInput(starter)}
-                      className="text-left p-4 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-700 hover:border-[#00CFFF]/30"
+                      className="text-left p-3 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-700 hover:border-[#00CFFF]/30"
                     >
-                      <span className="text-gray-300">"{starter}"</span>
+                      <span className="text-gray-300 text-sm">"{starter}"</span>
                     </button>
                   ))}
                 </div>
