@@ -201,31 +201,76 @@ export default function Home() {
           <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
           <div className="space-y-2">
             {chatSessions.map((session) => (
-              <div key={session.id} className="group flex items-center space-x-2">
-                <button
-                  onClick={() => loadChatSession(session.id)}
-                  className={`flex-1 text-left p-3 rounded-lg transition-colors ${
-                    currentSessionId === session.id 
-                      ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
-                      : 'hover:bg-gray-800 text-gray-300'
-                  }`}
-                >
+              <div key={session.id} className="group">
+                {editingSessionId === session.id ? (
+                  /* Editing Mode */
+                  <div className="flex items-center space-x-2 p-2">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveSessionTitle();
+                        if (e.key === 'Escape') cancelEditingSession();
+                      }}
+                      className="flex-1 px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent"
+                      autoFocus
+                      maxLength={50}
+                    />
+                    <button
+                      onClick={saveSessionTitle}
+                      className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={cancelEditingSession}
+                      className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  /* Display Mode */
                   <div className="flex items-center space-x-2">
-                    <MessageSquare className="w-4 h-4" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{session.title}</div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(session.lastActivity).toLocaleDateString()}
+                    <button
+                      onClick={() => loadChatSession(session.id)}
+                      className={`flex-1 text-left p-3 rounded-lg transition-colors ${
+                        currentSessionId === session.id 
+                          ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
+                          : 'hover:bg-gray-800 text-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <MessageSquare className="w-4 h-4" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate">{session.title}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(session.lastActivity).toLocaleDateString()}
+                          </div>
+                        </div>
                       </div>
+                    </button>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => startEditingSession(session.id, session.title)}
+                        className="p-1 text-gray-400 hover:text-[#00CFFF] transition-colors"
+                        title="Rename session"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteSession(session.id)}
+                        className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                </button>
-                <button
-                  onClick={() => deleteSession(session.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                )}
               </div>
             ))}
           </div>
