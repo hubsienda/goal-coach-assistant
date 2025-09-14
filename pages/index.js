@@ -1,6 +1,6 @@
 // pages/index.js
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Plus, Menu, X, Target, MessageSquare, Trash2, Edit3, Check } from 'lucide-react';
+import { Send, User, Bot, Plus, Menu, X, Target, MessageSquare, Trash2 } from 'lucide-react';
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -13,8 +13,6 @@ export default function Home() {
   const [goals, setGoals] = useState([]);
   const [goalCreationStep, setGoalCreationStep] = useState(null);
   const [pendingGoal, setPendingGoal] = useState(null);
-  const [editingSessionId, setEditingSessionId] = useState(null);
-  const [editingTitle, setEditingTitle] = useState('');
   const messagesEndRef = useRef(null);
 
   // Load chat sessions and goals from localStorage on mount
@@ -133,29 +131,6 @@ export default function Home() {
       setCurrentSessionId(null);
       setMessages([]);
     }
-  };
-
-  // Rename session functions
-  const startRename = (sessionId, currentTitle) => {
-    setEditingSessionId(sessionId);
-    setEditingTitle(currentTitle);
-  };
-
-  const saveRename = () => {
-    if (editingTitle.trim() && editingSessionId) {
-      setChatSessions(prev => prev.map(session => 
-        session.id === editingSessionId 
-          ? { ...session, title: editingTitle.trim() }
-          : session
-      ));
-    }
-    setEditingSessionId(null);
-    setEditingTitle('');
-  };
-
-  const cancelRename = () => {
-    setEditingSessionId(null);
-    setEditingTitle('');
   };
 
   const handleSubmit = async (e) => {
@@ -395,69 +370,31 @@ User Context: ${userContext || 'New conversation'}`;
           <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
           <div className="space-y-2">
             {chatSessions.map((session) => (
-              <div key={session.id} className="group">
-                {editingSessionId === session.id ? (
-                  /* Edit Mode */
-                  <div className="flex items-center space-x-2 p-2">
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveRename();
-                        if (e.key === 'Escape') cancelRename();
-                      }}
-                      className="flex-1 px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00CFFF]"
-                      autoFocus
-                      maxLength={50}
-                    />
-                    <button onClick={saveRename} className="p-1 text-green-400 hover:text-green-300">
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button onClick={cancelRename} className="p-1 text-red-400 hover:text-red-300">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  /* Display Mode */
+              <div key={session.id} className="group flex items-center space-x-2">
+                <button
+                  onClick={() => loadChatSession(session.id)}
+                  className={`flex-1 text-left p-3 rounded-lg transition-colors ${
+                    currentSessionId === session.id 
+                      ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
+                      : 'hover:bg-gray-800 text-gray-300'
+                  }`}
+                >
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => loadChatSession(session.id)}
-                      className={`flex-1 text-left p-3 rounded-lg transition-colors ${
-                        currentSessionId === session.id 
-                          ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
-                          : 'hover:bg-gray-800 text-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <MessageSquare className="w-4 h-4" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm truncate">{session.title}</div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(session.lastActivity).toLocaleDateString()}
-                          </div>
-                        </div>
+                    <MessageSquare className="w-4 h-4" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm truncate">{session.title}</div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(session.lastActivity).toLocaleDateString()}
                       </div>
-                    </button>
-                    
-                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => startRename(session.id, session.title)}
-                        className="p-1 text-gray-400 hover:text-[#00CFFF] transition-colors"
-                        title="Rename"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteSession(session.id)}
-                        className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
-                )}
+                </button>
+                <button
+                  onClick={() => deleteSession(session.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
