@@ -268,8 +268,7 @@ export default function Home() {
                 <div className="w-20 h-20 bg-[#00CFFF] rounded-full flex items-center justify-center mb-4 mx-auto">
                   <span className="text-[#0D1B2A] font-bold text-3xl">G</span>
                 </div>
-               </p>
-              </div>
+               </div>
 
               {/* User Context Input */}
               <div className="w-full max-w-2xl mb-8">
