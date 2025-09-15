@@ -10,18 +10,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages } = req.body;
-
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ message: 'Invalid messages format' });
-    }
+    const { messages, userContext } = req.body;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { 
           role: 'system', 
-          content: 'You are a helpful goal coach. Keep responses under 150 words.' 
+          content: `You are an experienced life and career coach. Provide concise, actionable advice in under 150 words. User Context: ${userContext || 'New conversation'}` 
         },
         ...messages
       ],
