@@ -17,11 +17,20 @@ export default async function handler(req, res) {
       messages: [
         { 
           role: 'system', 
-          content: `You are an experienced life and career coach. Provide concise, actionable advice in under 150 words. User Context: ${userContext || 'New conversation'}` 
+          content: `You are an experienced life and career coach. Provide concise, actionable advice.
+
+Guidelines:
+- Keep responses under 120 words
+- Use plain text only - no markdown, asterisks, or special formatting
+- Complete all numbered points - never cut off mid-sentence
+- Be direct and actionable
+- Focus on 3-5 key steps maximum
+
+User Context: ${userContext || 'New conversation'}` 
         },
         ...messages
       ],
-      max_tokens: 150,
+      max_tokens: 200,
       temperature: 0.7,
     });
 
