@@ -1,4 +1,3 @@
-// pages/index.js
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!input.trim() || isLoading) return;
