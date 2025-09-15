@@ -140,7 +140,7 @@ export default function Home() {
 
   const conversationStarters = [
     "I want to start a new fitness routine but struggle with consistency",
-     "I want to develop a new skill but don't know where to start"
+    "I want to develop a new skill but don't know where to start"
   ];
 
   return (
@@ -263,9 +263,7 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto bg-[#0D1B2A]">
           {messages.length === 0 ? (
             /* Welcome Screen */
-          <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-</div>
-
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center">
               {/* User Context Input */}
               <div className="w-full max-w-2xl mb-8">
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
@@ -400,4 +398,3 @@ export default function Home() {
     </div>
   );
 }
-
