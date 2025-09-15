@@ -149,16 +149,27 @@ export default function Home() {
     // Check if this might be a goal creation intent
     const isGoalIntent = detectGoalIntent(input);
     
+    // Store input before clearing it
+    const originalInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      let systemPrompt = '';
+      let systemPrompt = `You are an experienced life and career coach. Provide concise, actionable advice in under 150 words.
+
+Guidelines:
+- Be supportive but direct
+- Ask 1 follow-up question maximum
+- Provide specific, actionable steps
+- Keep responses conversational and encouraging
+
+Current goals: ${goals.length > 0 ? goals.map(g => g.title).join(', ') : 'None yet'}
+User Context: ${userContext || 'New conversation'}`;
       
       if (isGoalIntent && !goalCreationStep) {
         // Start goal creation process
         setGoalCreationStep('clarifying');
-        systemPrompt = `You are a SMART goal creation assistant. The user just expressed a goal intention: "${input}"
+        systemPrompt = `You are a SMART goal creation assistant. The user just expressed a goal intention: "${originalInput}"
 
 Your job is to ask 1-2 SPECIFIC clarifying questions to make this goal SMART (Specific, Measurable, Achievable, Relevant, Time-bound). 
 
@@ -178,7 +189,7 @@ If ready to confirm, format like this:
 Is this correct? Reply 'yes' to create this goal."
 
 Keep responses under 100 words.`;
-      } else if (goalCreationStep === 'confirming' || input.toLowerCase().includes('yes')) {
+      } else if (goalCreationStep === 'confirming' || originalInput.toLowerCase().includes('yes')) {
         // Create the goal
         const goalTitle = pendingGoal || extractGoalFromConversation(newMessages);
         const newGoal = createGoal({
@@ -206,18 +217,6 @@ Keep responses under 100 words.`;
         updateCurrentSession(finalMessages);
         setIsLoading(false);
         return;
-      } else {
-        // Regular coaching conversation
-        systemPrompt = `You are an experienced life and career coach. Provide concise, actionable advice in under 150 words.
-
-Guidelines:
-- Be supportive but direct
-- Ask 1 follow-up question maximum
-- Provide specific, actionable steps
-- Keep responses conversational and encouraging
-
-Current goals: ${goals.length > 0 ? goals.map(g => g.title).join(', ') : 'None yet'}
-User Context: ${userContext || 'New conversation'}`;
       }
 
       const response = await fetch('/api/coach', {
@@ -226,7 +225,7 @@ User Context: ${userContext || 'New conversation'}`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: newMessages.slice(-5), // Only send last 5 messages to save on API costs
+          messages: newMessages.slice(-5),
           userContext,
           systemPrompt,
           maxTokens: 150
@@ -267,19 +266,9 @@ User Context: ${userContext || 'New conversation'}`;
     return userMessages.length > 0 ? userMessages[0].content : 'New Goal';
   };
 
-  const quickCommands = [
-    { command: '/goal', description: 'Create a new goal' },
-    { command: '/fitness', description: 'Create a fitness plan' },
-    { command: '/career', description: 'Career development guidance' },
-    { command: '/productivity', description: 'Boost your productivity' },
-    { command: '/habits', description: 'Build better habits' },
-  ];
-
   const conversationStarters = [
     "I want to start a new fitness routine but struggle with consistency",
-    "Help me organize my work projects and set priorities", 
-    "I'm feeling stuck in my career and need direction",
-    "I want to develop a new skill but don't know where to start"
+    "Help me organize my work projects and set priorities"
   ];
 
   return (
@@ -313,61 +302,26 @@ User Context: ${userContext || 'New conversation'}`;
           </button>
         </div>
 
-        {/* Quick Commands */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Quick Commands</h3>
-          <div className="space-y-1">
-            {quickCommands.slice(0, 3).map((cmd, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setInput(cmd.command + ' ');
-                  setSidebarOpen(false);
-                }}
-                className="w-full text-left p-2 rounded hover:bg-gray-800 transition-colors group"
-              >
-                <div className="text-[#00CFFF] text-xs font-mono">{cmd.command}</div>
-                <div className="text-gray-400 text-xs">{cmd.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Goals Section */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Active Goals ({goals.length})</h3>
-          <div className="space-y-2">
-            {goals.slice(0, 3).map((goal) => (
-              <div key={goal.id} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-[#FFD60A] rounded-full mt-2 flex-shrink-0"></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">{goal.title}</div>
-                    <div className="text-xs text-gray-400">
-                      {new Date(goal.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {goals.length > 3 && (
-              <div className="text-xs text-gray-500 text-center py-2">
-                +{goals.length - 3} more goals
-              </div>
-            )}
-            {goals.length === 0 && (
-              <div className="text-center py-4 text-gray-500">
-                <Target className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                <p className="text-xs">No goals yet</p>
-                <p className="text-xs">Try: "I want to..."</p>
-              </div>
-            )}
-          </div>
+        {/* Help Link */}
+        <div className="border-b border-gray-700">
+          <a 
+            href="https://kb.goalverse.app" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full p-3 text-left hover:bg-gray-800 transition-colors flex items-center justify-between text-gray-400 hover:text-[#00CFFF]"
+          >
+            <span className="text-sm font-medium">Help & Commands</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
         </div>
 
         {/* Chat Sessions */}
         <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
+          <h3 className="text-sm font-medium text-gray-400 mb-3">
+            Recent Sessions ({chatSessions.length})
+          </h3>
           <div className="space-y-2">
             {chatSessions.map((session) => (
               <div key={session.id} className="group flex items-center space-x-2">
@@ -422,9 +376,7 @@ User Context: ${userContext || 'New conversation'}`;
           
           <div className="flex items-center space-x-3">
             <Target className="w-5 h-5 text-[#00CFFF]" />
-            <h1 className="text-lg font-semibold">
-              {currentSessionId ? 'Goal Coaching Session' : 'Welcome to GOALVERSE'}
-            </h1>
+            <h1 className="text-lg font-semibold">Your personal AI Coach</h1>
           </div>
           
           <div className="lg:hidden w-5"></div>
@@ -435,14 +387,6 @@ User Context: ${userContext || 'New conversation'}`;
           {messages.length === 0 ? (
             /* Welcome Screen */
             <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-              <div className="mb-6">
-                <div className="w-16 h-16 bg-[#00CFFF] rounded-full flex items-center justify-center mb-3 mx-auto">
-                  <span className="text-[#0D1B2A] font-bold text-2xl">G</span>
-                </div>
-                <h2 className="text-xl font-bold text-[#00CFFF] mb-1">Let's achieve your goals!</h2>
-                <p className="text-[#FFD60A] text-sm font-medium">Because progress needs direction.</p>
-              </div>
-
               {/* User Context Input */}
               <div className="w-full max-w-2xl mb-6">
                 <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
