@@ -140,9 +140,7 @@ export default function Home() {
 
   const conversationStarters = [
     "I want to start a new fitness routine but struggle with consistency",
-    "Help me organize my work projects and set priorities", 
-    "I'm feeling stuck in my career and need direction",
-    "I want to develop a new skill but don't know where to start"
+     "I want to develop a new skill but don't know where to start"
   ];
 
   return (
@@ -270,11 +268,7 @@ export default function Home() {
                 <div className="w-20 h-20 bg-[#00CFFF] rounded-full flex items-center justify-center mb-4 mx-auto">
                   <span className="text-[#0D1B2A] font-bold text-3xl">G</span>
                 </div>
-                <h2 className="text-2xl font-bold text-[#00CFFF] mb-2">Welcome to GOALVERSE</h2>
-                <p className="text-gray-400 max-w-md">
-                  Your personal AI coach to help you clarify goals, create action plans, and stay motivated on your journey to success.
-                </p>
-                <p className="text-[#FFD60A] text-sm mt-2 font-medium">Because progress needs direction.</p>
+               </p>
               </div>
 
               {/* User Context Input */}
@@ -411,3 +405,4 @@ export default function Home() {
     </div>
   );
 }
+
