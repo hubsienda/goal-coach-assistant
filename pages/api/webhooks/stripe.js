@@ -1,6 +1,5 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { buffer } from 'micro';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
@@ -10,7 +9,9 @@ const supabase = createClient(
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
   },
 };
 
@@ -19,12 +20,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const buf = await buffer(req);
+  const buf = Buffer.concat([]);
+  
+  for await (const chunk of req) {
+    buf.push(chunk);
+  }
+
+  const body = Buffer.concat(buf);
   const sig = req.headers['stripe-signature'];
 
   try {
     const event = stripe.webhooks.constructEvent(
-      buf,
+      body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
@@ -52,7 +59,7 @@ export default async function handler(req, res) {
     res.status(200).json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    res.status(400).json({ message: 'Webhook signature verification failed' });
+    res.status(400).json({ message: 'Webhook error' });
   }
 }
 
