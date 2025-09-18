@@ -1,11 +1,10 @@
 // hooks/useUsageTracking.js
-// tracks usage
 import { useState, useEffect } from 'react';
 
 export function useUsageTracking() {
   const [usage, setUsage] = useState({
-    usage_count: 0,
-    daily_goals_count: 0,
+    weekly_sessions_count: 0,   // Number of goal sessions created this week
+    daily_sessions_count: 0,    // Number of goal sessions created today
     subscription_status: 'free',
     trial_ends: null,
     email: null,
@@ -31,7 +30,8 @@ export function useUsageTracking() {
           const serverUsage = await response.json();
           setUsage(prev => ({
             ...prev,
-            ...serverUsage,
+            weekly_sessions_count: serverUsage.usage_count || 0,
+            subscription_status: serverUsage.subscription_status || 'free',
             userId
           }));
           setLoading(false);
@@ -39,21 +39,25 @@ export function useUsageTracking() {
         }
       }
 
-      // Anonymous user - fetch IP-based limits
-      const response = await fetch('/api/user/usage');
-      if (response.ok) {
-        const serverUsage = await response.json();
-        setUsage(prev => ({
-          ...prev,
-          ...serverUsage
-        }));
-      } else {
-        // Fallback to localStorage if API fails
-        loadUsageFromStorage();
+      // Anonymous user - load from localStorage and sync with IP-based API
+      loadUsageFromStorage();
+      
+      // Also try to get server-side IP limits
+      try {
+        const response = await fetch('/api/user/usage');
+        if (response.ok) {
+          const serverUsage = await response.json();
+          setUsage(prev => ({
+            ...prev,
+            daily_sessions_count: serverUsage.daily_goals_count || prev.daily_sessions_count,
+            subscription_status: serverUsage.subscription_status || 'free'
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching IP usage:', error);
       }
     } catch (error) {
       console.error('Error loading usage:', error);
-      // Fallback to localStorage
       loadUsageFromStorage();
     }
     
@@ -72,11 +76,26 @@ export function useUsageTracking() {
         const isNewDay = lastReset.toDateString() !== today.toDateString();
         
         if (isNewDay) {
-          parsed.daily_goals_count = 0;
+          parsed.daily_sessions_count = 0;
           parsed.last_daily_reset = today.toISOString();
         }
+
+        // Reset weekly count if it's a new week (every Monday)
+        const lastWeekReset = new Date(parsed.last_weekly_reset || 0);
+        const isNewWeek = getWeekStart(today) > getWeekStart(lastWeekReset);
         
-        setUsage(prev => ({ ...prev, ...parsed }));
+        if (isNewWeek) {
+          parsed.weekly_sessions_count = 0;
+          parsed.last_weekly_reset = today.toISOString();
+        }
+        
+        setUsage(prev => ({ 
+          ...prev, 
+          weekly_sessions_count: parsed.weekly_sessions_count || 0,
+          daily_sessions_count: parsed.daily_sessions_count || 0,
+          email: parsed.email || null,
+          subscription_status: parsed.subscription_status || 'free'
+        }));
         saveUsageToStorage(parsed);
       }
     } catch (error) {
@@ -95,12 +114,44 @@ export function useUsageTracking() {
   const updateUsage = (updates) => {
     const newUsage = { ...usage, ...updates };
     setUsage(newUsage);
-    saveUsageToStorage(newUsage);
+    
+    // Also save to localStorage
+    const storageData = {
+      ...newUsage,
+      last_daily_reset: new Date().toISOString(),
+      last_weekly_reset: usage.last_weekly_reset || new Date().toISOString()
+    };
+    saveUsageToStorage(storageData);
   };
 
   const trackGoalCreation = async () => {
+    console.log('🎯 Tracking goal creation:', { 
+      currentWeekly: usage.weekly_sessions_count, 
+      currentDaily: usage.daily_sessions_count, 
+      subscription: usage.subscription_status 
+    });
+
+    // Premium users have unlimited sessions
+    if (usage.subscription_status === 'active' || usage.subscription_status === 'trial') {
+      console.log('✅ Premium user - unlimited access');
+      return true;
+    }
+
+    // Check limits BEFORE creating
+    if (usage.daily_sessions_count >= 10) {
+      console.log('❌ Daily limit reached:', usage.daily_sessions_count);
+      setShowEmailModal(true);
+      return false;
+    }
+
+    if (usage.weekly_sessions_count >= 3) {
+      console.log('❌ Weekly limit reached:', usage.weekly_sessions_count);
+      setShowEmailModal(true);
+      return false;
+    }
+
     try {
-      // Call the API to check and increment usage
+      // Call API to track the goal creation
       const response = await fetch('/api/user/usage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,71 +162,80 @@ export function useUsageTracking() {
       });
 
       if (!response.ok) {
-        throw new Error('API call failed');
+        throw new Error(`API call failed: ${response.status}`);
       }
 
       const result = await response.json();
       
       if (result.limit_reached) {
+        console.log('❌ Server says limit reached');
         setShowEmailModal(true);
         return false;
       }
 
-      // Success - update local state to reflect the change
-      if (usage.userId) {
-        // Authenticated user - refresh from server
-        await loadInitialUsage();
-      } else {
-        // Anonymous user - update local counters
-        updateUsage({
-          daily_goals_count: (usage.daily_goals_count || 0) + 1,
-          last_daily_reset: new Date().toISOString()
-        });
-      }
+      // Success - increment local counters
+      const today = new Date();
+      updateUsage({
+        weekly_sessions_count: usage.weekly_sessions_count + 1,
+        daily_sessions_count: usage.daily_sessions_count + 1,
+        last_daily_reset: today.toISOString(),
+        last_weekly_reset: usage.last_weekly_reset || today.toISOString()
+      });
 
+      console.log('✅ Goal creation tracked successfully');
       return true;
+
     } catch (error) {
-      console.error('Goal creation tracking error:', error);
+      console.error('❌ Goal creation API error:', error);
       
       // Fallback to local-only tracking
-      if (usage.subscription_status === 'active') {
-        return true;
-      }
-
-      if ((usage.daily_goals_count || 0) >= 10 || (usage.usage_count || 0) >= 3) {
+      if (usage.weekly_sessions_count >= 3 || usage.daily_sessions_count >= 10) {
         setShowEmailModal(true);
         return false;
       }
 
       // Update local counters as fallback
+      const today = new Date();
       updateUsage({
-        usage_count: (usage.usage_count || 0) + 1,
-        daily_goals_count: (usage.daily_goals_count || 0) + 1,
-        last_daily_reset: new Date().toISOString()
+        weekly_sessions_count: usage.weekly_sessions_count + 1,
+        daily_sessions_count: usage.daily_sessions_count + 1,
+        last_daily_reset: today.toISOString(),
+        last_weekly_reset: usage.last_weekly_reset || today.toISOString()
       });
 
       return true;
     }
   };
 
-  const handleEmailModalSubmit = async (email) => {
+  const handleEmailModalSubmit = async (email, plan = 'monthly') => {
     try {
+      console.log('📧 Sending magic link to:', email, 'Plan:', plan);
+      
       const response = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ 
+          email,
+          plan,
+          upgrade: true 
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send magic link');
+        const errorText = await response.text();
+        console.error('Magic link API error:', response.status, errorText);
+        throw new Error(`Failed to send magic link: ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log('📧 Magic link response:', result);
 
       // Update local state with email
       updateUsage({ email });
       
-      console.log('Magic link sent successfully');
+      console.log('✅ Magic link sent successfully');
     } catch (error) {
-      console.error('Magic link error:', error);
+      console.error('❌ Magic link error:', error);
       throw error; // Re-throw so the modal can handle the error
     }
   };
@@ -188,6 +248,14 @@ export function useUsageTracking() {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
+  };
+
+  // Helper function to get start of week (Monday)
+  const getWeekStart = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
   };
 
   const upgradeToTrial = () => {
@@ -208,33 +276,50 @@ export function useUsageTracking() {
   };
 
   const resetUsageLimits = () => {
+    const today = new Date();
     updateUsage({
-      usage_count: 0,
-      daily_goals_count: 0,
-      last_daily_reset: new Date().toISOString()
+      weekly_sessions_count: 0,
+      daily_sessions_count: 0,
+      last_daily_reset: today.toISOString(),
+      last_weekly_reset: today.toISOString()
     });
   };
 
   const logout = () => {
     // Clear auth cookie
-    document.cookie = 'goalverse_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    if (typeof document !== 'undefined') {
+      document.cookie = 'goalverse_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
     
     // Reset to anonymous state
     setUsage({
-      usage_count: 0,
-      daily_goals_count: 0,
+      weekly_sessions_count: 0,
+      daily_sessions_count: 0,
       subscription_status: 'free',
       trial_ends: null,
       email: null,
       userId: null
     });
     
+    // Clear localStorage
+    localStorage.removeItem('goalverse_usage');
+    
     // Reload usage for anonymous user
     loadInitialUsage();
   };
 
+  // Computed values for display
+  const displayUsage = {
+    usage_count: usage.weekly_sessions_count,     // For backwards compatibility
+    daily_goals_count: usage.daily_sessions_count,
+    subscription_status: usage.subscription_status,
+    trial_ends: usage.trial_ends,
+    email: usage.email,
+    userId: usage.userId
+  };
+
   return {
-    usage,
+    usage: displayUsage,
     loading,
     showEmailModal,
     setShowEmailModal,
