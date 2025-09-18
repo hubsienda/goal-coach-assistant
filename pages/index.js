@@ -1,4 +1,5 @@
 // pages/index.js
+// hello this is goalverse
 import { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Plus, Menu, X, Target, MessageSquare, Settings, Archive, Trash2, Crown } from 'lucide-react';
 import EmailCaptureModal from '../components/EmailCaptureModal';
