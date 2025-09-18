@@ -1,4 +1,5 @@
 // hooks/useUsageTracking.js
+// tracks usage
 import { useState, useEffect } from 'react';
 
 export function useUsageTracking() {
