@@ -137,6 +137,7 @@ PREMIUM COACHING MODE:
 ${userHistory.length > 0 ? `Previous conversation insights: ${userHistory.join('. ')}` : ''}
 
 Remember to be thorough, insightful, and provide premium-level value in your response.`;
+  }
 
   return basePrompt + `
 
