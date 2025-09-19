@@ -1,6 +1,6 @@
 // components/EmailCaptureModal.js
 import { useState } from 'react';
-import { X, Crown, Check, Zap } from 'lucide-react';
+import { X, Crown, Check, Zap, Shield, CreditCard } from 'lucide-react';
 
 export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
   const [email, setEmail] = useState('');
@@ -22,7 +22,7 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
       await onSubmit(email, selectedPlan);
       setStep('success');
       
-      // Auto close after 5 seconds to give user time to check email
+      // Auto close after 5 seconds
       setTimeout(() => {
         onClose();
         setStep('email');
@@ -31,7 +31,7 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
       }, 5000);
     } catch (error) {
       console.error('Email submission error:', error);
-      setError('Failed to send upgrade link. Please try again.');
+      setError('Failed to send payment link. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -64,8 +64,17 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
                 <h2 className="text-2xl font-bold text-white">Upgrade to Premium</h2>
               </div>
               <p className="text-gray-300 text-sm">
-                You've reached your free limit of 3 goal sessions per week. Upgrade to continue your goal journey!
+                You've reached your free limit of 3 goal sessions per week. Upgrade for unlimited access!
               </p>
+            </div>
+
+            {/* Money-Back Guarantee Banner */}
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-3 mb-6 text-center">
+              <div className="flex items-center justify-center space-x-2 mb-1">
+                <Shield className="w-5 h-5 text-green-400" />
+                <span className="text-green-400 font-semibold text-sm">14-Day Money-Back Guarantee</span>
+              </div>
+              <p className="text-green-300 text-xs">Full refund if not satisfied • No questions asked</p>
             </div>
 
             {/* Premium Benefits */}
@@ -74,10 +83,10 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
               <div className="space-y-2">
                 {[
                   'Unlimited goal coaching sessions',
-                  'Advanced progress tracking',
-                  'Personalized action plans',
-                  'Priority AI responses',
-                  'Export your goals & progress'
+                  'Priority AI responses (faster & detailed)',
+                  'Advanced progress tracking & analytics',
+                  'Export goals and conversations (PDF/CSV)',
+                  'Cloud sync across all devices'
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <Check className="w-4 h-4 text-[#00CFFF]" />
@@ -150,16 +159,21 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
                   <div className="w-5 h-5 border-2 border-[#0D1B2A]/30 border-t-[#0D1B2A] rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Zap className="w-5 h-5" />
-                    <span>Start 7-Day Free Trial</span>
+                    <CreditCard className="w-5 h-5" />
+                    <span>Continue to Payment</span>
                   </>
                 )}
               </button>
             </form>
 
-            <p className="text-xs text-gray-500 text-center mt-4">
-              7-day free trial, then {selectedPlan === 'monthly' ? '$6/month' : '$60/year'}. Cancel anytime.
-            </p>
+            <div className="text-center mt-4">
+              <p className="text-xs text-gray-500">
+                <strong>Secure payment</strong> • {selectedPlan === 'monthly' ? '$6/month' : '$60/year'} + applicable taxes
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                14-day money-back guarantee • Cancel anytime
+              </p>
+            </div>
           </>
         ) : (
           /* Success Step */
@@ -169,11 +183,16 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Check Your Email!</h2>
             <p className="text-gray-300 text-sm mb-4">
-              We've sent you a magic link to complete your upgrade to Premium.
+              We've sent you a secure payment link to complete your upgrade.
             </p>
             <p className="text-[#00CFFF] text-sm">
-              Check your inbox and click the link to activate your 7-day free trial.
+              Click the link to securely pay and unlock unlimited goal sessions!
             </p>
+            <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3 mt-4">
+              <p className="text-green-400 text-xs font-semibold">
+                14-day money-back guarantee • Instant premium access after payment
+              </p>
+            </div>
           </div>
         )}
       </div>
