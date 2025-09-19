@@ -1,7 +1,7 @@
 // pages/api/user/export.js
 import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit';
-import { Parser } from 'json2csv';
+import { Parser } from '@json2csv/plainjs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
