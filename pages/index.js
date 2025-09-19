@@ -1,8 +1,8 @@
 // pages/index.js
-// hello this is goalverse
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Plus, Menu, X, Target, MessageSquare, Settings, Archive, Trash2, Crown } from 'lucide-react';
+import { Send, User, Plus, Menu, X, MessageSquare, Trash2, Crown, HelpCircle } from 'lucide-react';
 import EmailCaptureModal from '../components/EmailCaptureModal';
+import HelpModal from '../components/HelpModal';
 import { useUsageTracking } from '../hooks/useUsageTracking';
 
 export default function Home() {
@@ -13,6 +13,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatSessions, setChatSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Usage tracking
@@ -161,14 +162,6 @@ export default function Home() {
     }
   };
 
-  const quickCommands = [
-    { command: '/fitness', description: 'Create a fitness plan' },
-    { command: '/career', description: 'Career development guidance' },
-    { command: '/productivity', description: 'Boost your productivity' },
-    { command: '/habits', description: 'Build better habits' },
-    { command: '/goals', description: 'Set and achieve goals' },
-  ];
-
   const conversationStarters = [
     "I want to start a new fitness routine but struggle with consistency",
     "I want to develop a new skill but don't know where to start"
@@ -185,6 +178,12 @@ export default function Home() {
         isOpen={showEmailModal}
         onClose={() => setShowEmailModal(false)}
         onSubmit={handleEmailModalSubmit}
+      />
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
       />
 
       {/* Sidebar */}
@@ -242,27 +241,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Quick Commands */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Quick Commands</h3>
-          <div className="space-y-2">
-            {quickCommands.map((cmd, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setInput(cmd.command + ' ');
-                  setSidebarOpen(false);
-                }}
-                className="w-full text-left p-2 rounded-lg hover:bg-gray-800 transition-colors group"
-              >
-                <div className="text-[#00CFFF] text-sm font-mono">{cmd.command}</div>
-                <div className="text-gray-400 text-xs">{cmd.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Chat Sessions */}
+        {/* Recent Sessions */}
         <div className="flex-1 overflow-y-auto p-4">
           <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
           <div className="space-y-2">
@@ -299,35 +278,40 @@ export default function Home() {
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-700">
-          <div className="text-center">
-            <div className="text-[#FFD60A] text-sm font-medium mb-1">GOALVERSE</div>
-            <div className="text-gray-400 text-xs">Because progress needs direction.</div>
+          <div className="flex items-center justify-between">
+            <span className="text-[#FFD60A] text-sm font-medium">
+              GOALVERSE, <span className="text-gray-400">because progress needs direction.</span>
+            </span>
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className="text-gray-400 hover:text-[#00CFFF] transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="bg-[#0D1B2A] border-b border-gray-700 p-4 flex items-center justify-between">
+        {/* Mobile Header Bar Only */}
+        <div className="lg:hidden bg-[#0D1B2A] border-b border-gray-700 p-4 flex items-center justify-between">
           <button 
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white"
           >
             <Menu className="w-5 h-5" />
           </button>
-          
-          <div className="flex items-center space-x-3">
-            <Target className="w-5 h-5 text-[#00CFFF]" />
-            <h1 className="text-lg font-semibold">
-              {currentSessionId ? 'Goal Coaching Session' : 'Welcome to GOALVERSE'}
-            </h1>
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-[#00CFFF] rounded flex items-center justify-center">
+              <span className="text-[#0D1B2A] font-bold text-sm">G</span>
+            </div>
+            <span className="text-[#00CFFF] font-bold">GOALVERSE</span>
           </div>
-          
-          <div className="lg:hidden w-5"></div>
+          <div className="w-5"></div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages Area - Full Height */}
         <div className="flex-1 overflow-y-auto bg-[#0D1B2A]">
           {messages.length === 0 ? (
             /* Welcome Screen */
@@ -383,7 +367,7 @@ export default function Home() {
                     {message.type === 'goal-created' ? (
                       <div className="bg-gradient-to-r from-[#00CFFF]/20 to-[#FFD60A]/20 border border-[#00CFFF]/30 rounded-2xl p-4 max-w-md">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Target className="w-5 h-5 text-[#00CFFF]" />
+                          <Plus className="w-5 h-5 text-[#00CFFF]" />
                           <span className="text-[#00CFFF] font-medium text-sm">Goal Created!</span>
                         </div>
                         <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
