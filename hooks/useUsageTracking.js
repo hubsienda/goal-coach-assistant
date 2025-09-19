@@ -5,8 +5,7 @@ export function useUsageTracking() {
   const [usage, setUsage] = useState({
     weekly_sessions_count: 0,   // Number of goal sessions created this week
     daily_sessions_count: 0,    // Number of goal sessions created today
-    subscription_status: 'free',
-    trial_ends: null,
+    subscription_status: 'free', // 'free' or 'active' (no trial status)
     email: null,
     userId: null
   });
@@ -132,20 +131,20 @@ export function useUsageTracking() {
     });
 
     // Premium users have unlimited sessions
-    if (usage.subscription_status === 'active' || usage.subscription_status === 'trial') {
+    if (usage.subscription_status === 'active') {
       console.log('✅ Premium user - unlimited access');
       return true;
     }
 
-    // Check limits BEFORE creating
+    // Check FREE tier limits BEFORE creating
     if (usage.daily_sessions_count >= 10) {
-      console.log('❌ Daily limit reached:', usage.daily_sessions_count);
+      console.log('❌ Daily limit reached (10/day):', usage.daily_sessions_count);
       setShowEmailModal(true);
       return false;
     }
 
     if (usage.weekly_sessions_count >= 3) {
-      console.log('❌ Weekly limit reached:', usage.weekly_sessions_count);
+      console.log('❌ Weekly limit reached (3/week):', usage.weekly_sessions_count);
       setShowEmailModal(true);
       return false;
     }
@@ -209,33 +208,34 @@ export function useUsageTracking() {
 
   const handleEmailModalSubmit = async (email, plan = 'monthly') => {
     try {
-      console.log('📧 Sending magic link to:', email, 'Plan:', plan);
+      console.log('💳 Creating payment link for:', email, 'Plan:', plan);
       
-      const response = await fetch('/api/auth/magic-link', {
+      // Call Stripe checkout creation instead of magic link
+      const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email,
           plan,
-          upgrade: true 
+          priceId: plan === 'annual' ? process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID : process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Magic link API error:', response.status, errorText);
-        throw new Error(`Failed to send magic link: ${response.status}`);
+        console.error('Stripe checkout API error:', response.status, errorText);
+        throw new Error(`Failed to create payment link: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('📧 Magic link response:', result);
+      console.log('💳 Stripe checkout response:', result);
 
       // Update local state with email
       updateUsage({ email });
       
-      console.log('✅ Magic link sent successfully');
+      console.log('✅ Payment link sent successfully');
     } catch (error) {
-      console.error('❌ Magic link error:', error);
+      console.error('❌ Payment link error:', error);
       throw error; // Re-throw so the modal can handle the error
     }
   };
@@ -258,20 +258,9 @@ export function useUsageTracking() {
     return new Date(d.setDate(diff));
   };
 
-  const upgradeToTrial = () => {
-    const trialEnd = new Date();
-    trialEnd.setDate(trialEnd.getDate() + 7);
-    
-    updateUsage({
-      subscription_status: 'trial',
-      trial_ends: trialEnd.toISOString()
-    });
-  };
-
   const upgradeToActive = () => {
     updateUsage({
-      subscription_status: 'active',
-      trial_ends: null
+      subscription_status: 'active'
     });
   };
 
@@ -296,7 +285,6 @@ export function useUsageTracking() {
       weekly_sessions_count: 0,
       daily_sessions_count: 0,
       subscription_status: 'free',
-      trial_ends: null,
       email: null,
       userId: null
     });
@@ -308,12 +296,11 @@ export function useUsageTracking() {
     loadInitialUsage();
   };
 
-  // Computed values for display
+  // Computed values for display (backwards compatibility)
   const displayUsage = {
     usage_count: usage.weekly_sessions_count,     // For backwards compatibility
     daily_goals_count: usage.daily_sessions_count,
     subscription_status: usage.subscription_status,
-    trial_ends: usage.trial_ends,
     email: usage.email,
     userId: usage.userId
   };
@@ -325,7 +312,6 @@ export function useUsageTracking() {
     setShowEmailModal,
     trackGoalCreation,
     handleEmailModalSubmit,
-    upgradeToTrial,
     upgradeToActive,
     resetUsageLimits,
     updateUsage,
