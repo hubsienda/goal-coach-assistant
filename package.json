@@ -21,7 +21,7 @@
     "micro": "^10.0.1",
     "recharts": "^2.8.0",
     "pdfkit": "^0.13.0",
-    "json2csv": "^6.1.0"
+    "@json2csv/plainjs": "^7.0.6"
   },
   "devDependencies": {
     "typescript": "^5",
