@@ -74,7 +74,16 @@ export default function EmailCaptureModal({ isOpen, onClose, onSubmit }) {
               {/* 14-Day Guarantee Badge */}
               <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3 text-center">
                 <div className="text-green-400 font-semibold text-sm">14-Day Money-Back Guarantee</div>
-                <div className="text-green-300 text-xs">Full refund if not satisfied</div>
+               <div className="text-green-300 text-xs">
+                  <a 
+                    href="https://get.goalverse.app/legal" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-green-300 hover:text-green-200 underline"
+                  >
+                    Refund Policy
+                  </a>
+                </div>
               </div>
 
               {/* Premium Benefits - Compact */}
