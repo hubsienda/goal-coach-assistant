@@ -22,7 +22,7 @@
     "recharts": "^2.8.0",
     "pdfkit": "^0.13.0",
     "@json2csv/plainjs": "^7.0.6",
-    "date-fns": "^3.6.0"
+    
   },
   "devDependencies": {
     "typescript": "^5",
