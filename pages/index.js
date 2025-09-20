@@ -1,12 +1,14 @@
-// pages/index.js
+// pages/index.js - Enhanced with Progress Dashboard Integration
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Plus, Menu, X, MessageSquare, Trash2, Crown, HelpCircle, Target } from 'lucide-react';
+import { Send, User, Plus, Menu, X, MessageSquare, Trash2, Crown, HelpCircle, Target, BarChart3 } from 'lucide-react';
 import EmailCaptureModal from '../components/EmailCaptureModal';
 import HelpModal from '../components/HelpModal';
 import GoalTemplatesModal from '../components/GoalTemplatesModal';
+import ProgressDashboard from '../components/ProgressDashboard';
 import { useUsageTracking } from '../hooks/useUsageTracking';
 
 export default function Home() {
+  // Existing state - preserved exactly as before
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,9 +18,13 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  
+  // NEW: Progress Dashboard Integration State
+  const [currentView, setCurrentView] = useState('chat'); // 'chat' or 'progress'
+  
   const messagesEndRef = useRef(null);
 
-  // Usage tracking
+  // Usage tracking - preserved exactly as before
   const { 
     usage, 
     showEmailModal, 
@@ -27,7 +33,7 @@ export default function Home() {
     handleEmailModalSubmit 
   } = useUsageTracking();
 
-  // Load chat sessions from localStorage on mount
+  // Load chat sessions from localStorage on mount - preserved exactly
   useEffect(() => {
     const savedSessions = localStorage.getItem('goalverse_sessions');
     if (savedSessions) {
@@ -36,13 +42,14 @@ export default function Home() {
     }
   }, []);
 
-  // Save chat sessions to localStorage whenever they change
+  // Save chat sessions to localStorage whenever they change - preserved exactly
   useEffect(() => {
     if (chatSessions.length > 0) {
       localStorage.setItem('goalverse_sessions', JSON.stringify(chatSessions));
     }
   }, [chatSessions]);
 
+  // All existing functions preserved exactly as they were
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -249,6 +256,20 @@ Help me get started with the first specific steps.`,
     }
   };
 
+  // NEW: Navigation functions for Progress Dashboard
+  const switchToProgress = () => {
+    // Premium feature gating - show upgrade modal for free users
+    if (usage.subscription_status === 'free') {
+      setShowEmailModal(true);
+      return;
+    }
+    setCurrentView('progress');
+  };
+
+  const switchToChat = () => {
+    setCurrentView('chat');
+  };
+
   const conversationStarters = [
     "I want to start a new fitness routine but struggle with consistency",
     "I want to develop a new skill but don't know where to start"
@@ -260,7 +281,7 @@ Help me get started with the first specific steps.`,
 
   return (
     <div className="h-screen bg-[#0D1B2A] text-white flex overflow-hidden">
-      {/* Modals */}
+      {/* Modals - preserved exactly */}
       <EmailCaptureModal 
         isOpen={showEmailModal}
         onClose={() => setShowEmailModal(false)}
@@ -278,12 +299,13 @@ Help me get started with the first specific steps.`,
         onSelectTemplate={handleTemplateSelection}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar - Enhanced with Progress Navigation */}
       <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 w-80 h-full bg-[#0D1B2A] border-r border-gray-700 transition-transform duration-300 ease-in-out flex flex-col`}>
-        {/* Sidebar Header */}
+        
+        {/* Sidebar Header - Enhanced with Navigation Tabs */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            {/* GOALVERSE Logo */}
+            {/* GOALVERSE Logo - preserved exactly */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-[#00CFFF] rounded-lg flex items-center justify-center">
                 <span className="text-[#0D1B2A] font-bold text-lg">G</span>
@@ -301,27 +323,58 @@ Help me get started with the first specific steps.`,
             </button>
           </div>
           
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            <button 
-              onClick={createNewChat}
-              className="w-full bg-[#00CFFF] text-[#0D1B2A] px-4 py-2 rounded-lg font-medium hover:bg-[#00CFFF]/90 transition-colors flex items-center justify-center space-x-2"
+          {/* NEW: Navigation Tabs */}
+          <div className="flex bg-[#1B2936] rounded-lg p-1 mb-4">
+            <button
+              onClick={switchToChat}
+              className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${
+                currentView === 'chat' 
+                  ? 'bg-[#00CFFF] text-[#0D1B2A]' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>New Goal Session</span>
+              <MessageSquare className="w-4 h-4" />
+              <span>Chat</span>
             </button>
-            
-            <button 
-              onClick={() => setShowTemplatesModal(true)}
-              className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+            <button
+              onClick={switchToProgress}
+              className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${
+                currentView === 'progress' 
+                  ? 'bg-[#00CFFF] text-[#0D1B2A]' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
             >
-              <Target className="w-4 h-4" />
-              <span>Goal Templates</span>
+              <BarChart3 className="w-4 h-4" />
+              <span>Progress</span>
+              {usage.subscription_status === 'free' && (
+                <span className="text-xs bg-[#FFD60A] text-[#0D1B2A] px-1 rounded">PRO</span>
+              )}
             </button>
           </div>
+          
+          {/* Action Buttons - Only show for Chat view */}
+          {currentView === 'chat' && (
+            <div className="space-y-2">
+              <button 
+                onClick={createNewChat}
+                className="w-full bg-[#00CFFF] text-[#0D1B2A] px-4 py-2 rounded-lg font-medium hover:bg-[#00CFFF]/90 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Goal Session</span>
+              </button>
+              
+              <button 
+                onClick={() => setShowTemplatesModal(true)}
+                className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Target className="w-4 h-4" />
+                <span>Goal Templates</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Usage Status */}
+        {/* Usage Status - preserved exactly */}
         {usage.subscription_status === 'free' && (
           <div className="px-4 py-3 border-b border-gray-700">
             <div className="text-xs text-gray-400 mb-1">
@@ -344,42 +397,69 @@ Help me get started with the first specific steps.`,
           </div>
         )}
 
-        {/* Recent Sessions */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
-          <div className="space-y-2">
-            {chatSessions.map((session) => (
-              <div key={session.id} className="group flex items-center space-x-2">
-                <button
-                  onClick={() => loadChatSession(session.id)}
-                  className={`flex-1 text-left p-3 rounded-lg transition-colors ${
-                    currentSessionId === session.id 
-                      ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
-                      : 'hover:bg-gray-800 text-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <MessageSquare className="w-4 h-4" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{session.title}</div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(session.lastActivity).toLocaleDateString()}
+        {/* Conditional Sidebar Content */}
+        {currentView === 'chat' ? (
+          /* Recent Sessions - preserved exactly */
+          <div className="flex-1 overflow-y-auto p-4">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
+            <div className="space-y-2">
+              {chatSessions.map((session) => (
+                <div key={session.id} className="group flex items-center space-x-2">
+                  <button
+                    onClick={() => loadChatSession(session.id)}
+                    className={`flex-1 text-left p-3 rounded-lg transition-colors ${
+                      currentSessionId === session.id 
+                        ? 'bg-[#00CFFF]/20 text-[#00CFFF]' 
+                        : 'hover:bg-gray-800 text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare className="w-4 h-4" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm truncate">{session.title}</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(session.lastActivity).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => deleteSession(session.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                  </button>
+                  <button
+                    onClick={() => deleteSession(session.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* NEW: Progress Summary in Sidebar */
+          <div className="flex-1 overflow-y-auto p-4">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Progress Overview</h3>
+            <div className="space-y-3">
+              <div className="bg-[#1B2936] p-3 rounded-lg border border-gray-700">
+                <div className="text-xs text-gray-400">Goal Analytics</div>
+                <div className="text-lg font-bold text-[#00CFFF]">Advanced Tracking</div>
+                <div className="text-xs text-gray-500 mt-1">Charts, trends, and insights</div>
+              </div>
+              
+              <div className="bg-[#1B2936] p-3 rounded-lg border border-gray-700">
+                <div className="text-xs text-gray-400">Export Data</div>
+                <div className="text-lg font-bold text-[#FFD60A]">PDF & CSV</div>
+                <div className="text-xs text-gray-500 mt-1">Download your progress</div>
+              </div>
+              
+              <div className="bg-[#1B2936] p-3 rounded-lg border border-gray-700">
+                <div className="text-xs text-gray-400">AI Insights</div>
+                <div className="text-lg font-bold text-green-400">Smart Analytics</div>
+                <div className="text-xs text-gray-500 mt-1">Personalized recommendations</div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Sidebar Footer */}
+        {/* Sidebar Footer - preserved exactly */}
         <div className="p-4 border-t border-gray-700">
           <div className="flex items-center justify-between">
             <span className="text-[#FFD60A] text-sm font-medium">
@@ -395,9 +475,9 @@ Help me get started with the first specific steps.`,
         </div>
       </div>
 
-      {/* Main Chat Area */}
+      {/* Main Content Area - Enhanced with View Switching */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile Header Bar Only */}
+        {/* Mobile Header Bar Only - preserved exactly */}
         <div className="lg:hidden bg-[#0D1B2A] border-b border-gray-700 p-4 flex items-center justify-between">
           <button 
             onClick={() => setSidebarOpen(true)}
@@ -414,136 +494,150 @@ Help me get started with the first specific steps.`,
           <div className="w-5"></div>
         </div>
 
-        {/* Messages Area - Full Height */}
-        <div className="flex-1 overflow-y-auto bg-[#0D1B2A]">
-          {messages.length === 0 ? (
-            /* Welcome Screen */
-            <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-              {/* User Context Input */}
-              <div className="w-full max-w-2xl mb-8">
-                <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
-                    Tell me about yourself (optional - helps me give better advice):
-                  </label>
-                  <textarea
-                    value={userContext}
-                    onChange={(e) => setUserContext(e.target.value)}
-                    placeholder="e.g., I'm a software developer, working remotely, looking to improve work-life balance and learn new skills..."
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              {/* Conversation Starters */}
-              <div className="w-full max-w-2xl">
-                <h3 className="text-gray-400 text-sm mb-4">Try asking about:</h3>
-                <div className="grid gap-3">
-                  {conversationStarters.map((starter, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setInput(starter)}
-                      className="text-left p-4 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-700 hover:border-[#00CFFF]/30"
-                    >
-                      <span className="text-gray-300">"{starter}"</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Chat Messages */
-            <div className="p-4 space-y-6 min-h-full">
-              {messages.map((message, index) => (
-                <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex items-start space-x-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    {/* Avatar */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === 'user' 
-                        ? 'bg-[#FFD60A] text-[#0D1B2A]' 
-                        : 'bg-[#00CFFF] text-[#0D1B2A]'
-                    }`}>
-                      {message.role === 'user' ? <User className="w-4 h-4" /> : <span className="font-bold text-sm">G</span>}
+        {/* Conditional Main Content */}
+        {currentView === 'chat' ? (
+          /* Chat Interface - preserved exactly */
+          <>
+            {/* Messages Area - Full Height - preserved exactly */}
+            <div className="flex-1 overflow-y-auto bg-[#0D1B2A]">
+              {messages.length === 0 ? (
+                /* Welcome Screen - preserved exactly */
+                <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                  {/* User Context Input */}
+                  <div className="w-full max-w-2xl mb-8">
+                    <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                      <label className="block text-sm font-medium text-gray-300 mb-3">
+                        Tell me about yourself (optional - helps me give better advice):
+                      </label>
+                      <textarea
+                        value={userContext}
+                        onChange={(e) => setUserContext(e.target.value)}
+                        placeholder="e.g., I'm a software developer, working remotely, looking to improve work-life balance and learn new skills..."
+                        className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400"
+                        rows={3}
+                      />
                     </div>
-                    
-                    {/* Message Bubble or Goal Card */}
-                    {message.type === 'goal-created' ? (
-                      <div className="bg-gradient-to-r from-[#00CFFF]/20 to-[#FFD60A]/20 border border-[#00CFFF]/30 rounded-2xl p-4 max-w-md">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Plus className="w-5 h-5 text-[#00CFFF]" />
-                          <span className="text-[#00CFFF] font-medium text-sm">Goal Created!</span>
+                  </div>
+
+                  {/* Conversation Starters */}
+                  <div className="w-full max-w-2xl">
+                    <h3 className="text-gray-400 text-sm mb-4">Try asking about:</h3>
+                    <div className="grid gap-3">
+                      {conversationStarters.map((starter, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setInput(starter)}
+                          className="text-left p-4 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-700 hover:border-[#00CFFF]/30"
+                        >
+                          <span className="text-gray-300">"{starter}"</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Chat Messages - preserved exactly */
+                <div className="p-4 space-y-6 min-h-full">
+                  {messages.map((message, index) => (
+                    <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex items-start space-x-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                        {/* Avatar */}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          message.role === 'user' 
+                            ? 'bg-[#FFD60A] text-[#0D1B2A]' 
+                            : 'bg-[#00CFFF] text-[#0D1B2A]'
+                        }`}>
+                          {message.role === 'user' ? <User className="w-4 h-4" /> : <span className="font-bold text-sm">G</span>}
                         </div>
-                        <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                        
+                        {/* Message Bubble or Goal Card */}
+                        {message.type === 'goal-created' ? (
+                          <div className="bg-gradient-to-r from-[#00CFFF]/20 to-[#FFD60A]/20 border border-[#00CFFF]/30 rounded-2xl p-4 max-w-md">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Plus className="w-5 h-5 text-[#00CFFF]" />
+                              <span className="text-[#00CFFF] font-medium text-sm">Goal Created!</span>
+                            </div>
+                            <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
+                          </div>
+                        ) : (
+                          <div className={`px-4 py-3 rounded-2xl ${
+                            message.role === 'user'
+                              ? 'bg-[#FFD60A] text-[#0D1B2A] rounded-br-sm'
+                              : 'bg-gray-800 text-white rounded-bl-sm'
+                          }`}>
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className={`px-4 py-3 rounded-2xl ${
-                        message.role === 'user'
-                          ? 'bg-[#FFD60A] text-[#0D1B2A] rounded-br-sm'
-                          : 'bg-gray-800 text-white rounded-bl-sm'
-                      }`}>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  ))}
 
-              {/* Typing Indicator */}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-[#00CFFF] text-[#0D1B2A] flex items-center justify-center">
-                      <span className="font-bold text-sm">G</span>
-                    </div>
-                    <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-sm">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  {/* Typing Indicator */}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-[#00CFFF] text-[#0D1B2A] flex items-center justify-center">
+                          <span className="font-bold text-sm">G</span>
+                        </div>
+                        <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-sm">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-[#00CFFF] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
-          )}
-        </div>
 
-        {/* Input Area */}
-        <div className="bg-[#0D1B2A] border-t border-gray-700 p-4">
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1 relative">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  placeholder="What would you like to work on today?"
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400 resize-none max-h-32"
-                  disabled={isLoading}
-                  rows={1}
-                  style={{ minHeight: '48px' }}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="w-12 h-12 bg-[#00CFFF] text-[#0D1B2A] rounded-full hover:bg-[#00CFFF]/90 focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:ring-offset-2 focus:ring-offset-[#0D1B2A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+            {/* Input Area - preserved exactly */}
+            <div className="bg-[#0D1B2A] border-t border-gray-700 p-4">
+              <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+                <div className="flex items-end space-x-3">
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmit(e);
+                        }
+                      }}
+                      placeholder="What would you like to work on today?"
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:border-transparent text-white placeholder-gray-400 resize-none max-h-32"
+                      disabled={isLoading}
+                      rows={1}
+                      style={{ minHeight: '48px' }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !input.trim()}
+                    className="w-12 h-12 bg-[#00CFFF] text-[#0D1B2A] rounded-full hover:bg-[#00CFFF]/90 focus:outline-none focus:ring-2 focus:ring-[#00CFFF] focus:ring-offset-2 focus:ring-offset-[#0D1B2A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
-        </div>
+          </>
+        ) : (
+          /* NEW: Progress Dashboard View */
+          <div className="flex-1 overflow-hidden">
+            <ProgressDashboard 
+              userId={usage.userId}
+              subscription_status={usage.subscription_status}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Overlay for mobile sidebar */}
+      {/* Overlay for mobile sidebar - preserved exactly */}
       {sidebarOpen && (
         <div 
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
