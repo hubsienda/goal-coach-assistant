@@ -1,4 +1,4 @@
-// components/GoalTemplatesModal.js
+// components/GoalTemplatesModal.js - Desktop layout fix only
 import { useState } from 'react';
 import { X, Target, Clock, TrendingUp, User, Briefcase, Heart, BookOpen, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -407,39 +407,41 @@ export default function GoalTemplatesModal({ isOpen, onClose, onSelectTemplate }
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden flex">
+        {/* Content Area - FIXED: Added proper flex sizing for desktop */}
+        <div className="flex-1 overflow-hidden flex min-h-0">
           
-          {/* Desktop: Left Sidebar - Categories */}
-          <div className="hidden lg:block w-64 border-r border-gray-700 p-4">
-            <div className="space-y-2">
-              {categories.map((category) => {
-                const IconComponent = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => {
-                      setSelectedCategory(category.id);
-                      setExpandedTemplate(null);
-                    }}
-                    className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
-                      selectedCategory === category.id
-                        ? 'bg-[#00CFFF]/20 text-[#00CFFF]'
-                        : 'text-gray-300 hover:bg-gray-800'
-                    }`}
-                  >
-                    <IconComponent className={`w-5 h-5 ${
-                      selectedCategory === category.id ? 'text-[#00CFFF]' : category.color
-                    }`} />
-                    <span className="font-medium">{category.name}</span>
-                  </button>
-                );
-              })}
+          {/* Desktop: Left Sidebar - Categories - FIXED: Added flex-shrink-0 */}
+          <div className="hidden lg:flex lg:flex-shrink-0 lg:w-64 border-r border-gray-700">
+            <div className="w-full p-4">
+              <div className="space-y-2">
+                {categories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setSelectedCategory(category.id);
+                        setExpandedTemplate(null);
+                      }}
+                      className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
+                        selectedCategory === category.id
+                          ? 'bg-[#00CFFF]/20 text-[#00CFFF]'
+                          : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <IconComponent className={`w-5 h-5 flex-shrink-0 ${
+                        selectedCategory === category.id ? 'text-[#00CFFF]' : category.color
+                      }`} />
+                      <span className="font-medium">{category.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Templates List */}
-          <div className="flex-1 overflow-y-auto">
+          {/* Templates List - FIXED: Added proper flex-1 and min-w-0 */}
+          <div className="flex-1 min-w-0 overflow-y-auto">
             <div className="p-4 lg:p-6">
               <div className="space-y-4">
                 {currentTemplates.map((template) => (
