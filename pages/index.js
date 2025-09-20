@@ -1,8 +1,9 @@
 // pages/index.js
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Plus, Menu, X, MessageSquare, Trash2, Crown, HelpCircle } from 'lucide-react';
+import { Send, User, Plus, Menu, X, MessageSquare, Trash2, Crown, HelpCircle, Target } from 'lucide-react';
 import EmailCaptureModal from '../components/EmailCaptureModal';
 import HelpModal from '../components/HelpModal';
+import GoalTemplatesModal from '../components/GoalTemplatesModal';
 import { useUsageTracking } from '../hooks/useUsageTracking';
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
   const [chatSessions, setChatSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Usage tracking
@@ -105,6 +107,91 @@ export default function Home() {
     }
   };
 
+  const handleTemplateSelection = async (template) => {
+    // Check usage limits before creating template-based session
+    const canCreate = await trackGoalCreation();
+    if (!canCreate) {
+      return; // Usage limit reached, modal will show
+    }
+
+    const newSessionId = Date.now().toString();
+    const templateMessage = generateTemplateMessage(template);
+    
+    const newSession = {
+      id: newSessionId,
+      title: template.title,
+      messages: [templateMessage],
+      createdAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+      template: template.id
+    };
+    
+    setChatSessions(prev => [newSession, ...prev]);
+    setCurrentSessionId(newSessionId);
+    setMessages([templateMessage]);
+    setInput('');
+    setUserContext('');
+    setSidebarOpen(false);
+    
+    // Auto-send the template message to get AI response
+    handleTemplateMessage(templateMessage, newSessionId);
+  };
+
+  const generateTemplateMessage = (template) => {
+    return {
+      role: 'user',
+      content: `I want to work on: ${template.title}
+
+Goal: ${template.description}
+Timeline: ${template.duration}
+Difficulty: ${template.difficulty}
+
+Here's what I want to achieve:
+${template.framework.overview}
+
+Key milestones I'm aiming for:
+${template.framework.milestones.map((milestone, index) => `${index + 1}. ${milestone}`).join('\n')}
+
+Help me get started with the first specific steps.`,
+      template: true
+    };
+  };
+
+  const handleTemplateMessage = async (templateMessage, sessionId) => {
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/coach', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [templateMessage],
+          userContext,
+        }),
+      });
+
+      const data = await response.json();
+      const aiResponse = { role: 'assistant', content: data.message };
+      const finalMessages = [templateMessage, aiResponse];
+      
+      setMessages(finalMessages);
+      updateCurrentSession(finalMessages);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = { 
+        role: 'assistant', 
+        content: 'I apologize, but I encountered an error. Please try again.' 
+      };
+      const finalMessages = [templateMessage, errorMessage];
+      setMessages(finalMessages);
+      updateCurrentSession(finalMessages);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -173,17 +260,22 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-[#0D1B2A] text-white flex overflow-hidden">
-      {/* Email Capture Modal */}
+      {/* Modals */}
       <EmailCaptureModal 
         isOpen={showEmailModal}
         onClose={() => setShowEmailModal(false)}
         onSubmit={handleEmailModalSubmit}
       />
 
-      {/* Help Modal */}
       <HelpModal 
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
+      />
+
+      <GoalTemplatesModal
+        isOpen={showTemplatesModal}
+        onClose={() => setShowTemplatesModal(false)}
+        onSelectTemplate={handleTemplateSelection}
       />
 
       {/* Sidebar */}
@@ -209,13 +301,24 @@ export default function Home() {
             </button>
           </div>
           
-          <button 
-            onClick={createNewChat}
-            className="w-full bg-[#00CFFF] text-[#0D1B2A] px-4 py-2 rounded-lg font-medium hover:bg-[#00CFFF]/90 transition-colors flex items-center justify-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Goal Session</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <button 
+              onClick={createNewChat}
+              className="w-full bg-[#00CFFF] text-[#0D1B2A] px-4 py-2 rounded-lg font-medium hover:bg-[#00CFFF]/90 transition-colors flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Goal Session</span>
+            </button>
+            
+            <button 
+              onClick={() => setShowTemplatesModal(true)}
+              className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
+            >
+              <Target className="w-4 h-4" />
+              <span>Goal Templates</span>
+            </button>
+          </div>
         </div>
 
         {/* Usage Status */}
