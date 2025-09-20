@@ -1,65 +1,95 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { CheckCircle, XCircle, Loader } from 'lucide-react';
+// pages/api/auth/verify.js
+import { createClient } from '@supabase/supabase-js';
 
-export default function Verify() {
-  const router = useRouter();
-  const [status, setStatus] = useState('verifying'); // verifying, success, error
-  const { token } = router.query;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
-  useEffect(() => {
-    if (token) {
-      verifyToken();
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: 'Token is required' });
     }
-  }, [token]);
 
-  const verifyToken = async () => {
-    try {
-      const response = await fetch(`/api/auth/verify?token=${token}`);
-      
-      if (response.ok) {
-        setStatus('success');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-      } else {
-        setStatus('error');
+    // Find user with this magic token
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('magic_token', token)
+      .single();
+
+    if (error || !user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    // Check if token has expired (24 hours)
+    const tokenExpiry = new Date(user.magic_expires);
+    const now = new Date();
+
+    if (now > tokenExpiry) {
+      // Clear expired token
+      await supabase
+        .from('users')
+        .update({
+          magic_token: null,
+          magic_expires: null
+        })
+        .eq('id', user.id);
+
+      return res.status(400).json({ message: 'Token has expired' });
+    }
+
+    // Token is valid - clear it and activate user
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        magic_token: null,
+        magic_expires: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error clearing magic token:', updateError);
+      return res.status(500).json({ message: 'Failed to verify token' });
+    }
+
+    // Set auth cookie
+    res.setHeader('Set-Cookie', [
+      `goalverse_auth=${user.id}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`
+    ]);
+
+    // Log successful verification
+    await supabase
+      .from('usage_logs')
+      .insert({
+        user_id: user.id,
+        user_email: user.email,
+        event_type: 'magic_link_verified',
+        metadata: {
+          verification_time: new Date().toISOString()
+        },
+        created_at: new Date().toISOString()
+      });
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        subscription_status: user.subscription_status
       }
-    } catch (error) {
-      setStatus('error');
-    }
-  };
+    });
 
-  return (
-    <div className="min-h-screen bg-[#0D1B2A] text-white flex items-center justify-center">
-      <div className="text-center">
-        {status === 'verifying' && (
-          <>
-            <Loader className="w-12 h-12 text-[#00CFFF] mx-auto mb-4 animate-spin" />
-            <h1 className="text-2xl font-bold text-white mb-2">Verifying your account...</h1>
-            <p className="text-gray-400">Please wait while we authenticate your magic link.</p>
-          </>
-        )}
-
-        {status === 'success' && (
-          <>
-            <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome to GOALVERSE!</h1>
-            <p className="text-gray-400">Redirecting to your dashboard...</p>
-          </>
-        )}
-
-        {status === 'error' && (
-          <>
-            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Authentication Failed</h1>
-            <p className="text-gray-400 mb-4">Your magic link may have expired or is invalid.</p>
-            <a href="/" className="bg-[#00CFFF] text-[#0D1B2A] px-4 py-2 rounded-lg font-medium">
-              Return to GOALVERSE
-            </a>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(500).json({ message: 'Token verification failed' });
+  }
 }
