@@ -1,5 +1,4 @@
-// utils/emailTemplates.js - Smart Email Templates for Notifications
-import { format, parseISO, differenceInDays } from 'date-fns';
+// utils/emailTemplates.js - Smart Email Templates for Notifications (Native JS)
 
 /**
  * Generate personalized email templates based on user data and notification type
@@ -139,7 +138,7 @@ export class EmailTemplateGenerator {
               <h1 style="color: #00CFFF; margin: 0; font-size: 24px;">GOALVERSE</h1>
             </div>
             <h2 style="color: white; margin: 0 0 10px 0;">Your Weekly Progress Report</h2>
-            <p style="color: #9CA3AF; margin: 0;">${format(new Date(), 'MMMM do, yyyy')}</p>
+            <p style="color: #9CA3AF; margin: 0;">${this.formatDate(new Date())}</p>
           </div>
 
           <!-- Personal Greeting -->
@@ -231,7 +230,7 @@ export class EmailTemplateGenerator {
    */
   generateProgressCheckIn(userData, lastActivity, goalsSummary) {
     const { firstName = 'Goal Achiever', email } = userData;
-    const daysSinceActivity = differenceInDays(new Date(), parseISO(lastActivity));
+    const daysSinceActivity = this.getDaysBetween(new Date(lastActivity), new Date());
     const urgencyLevel = this.getUrgencyLevel(daysSinceActivity);
     
     return `
@@ -390,19 +389,6 @@ export class EmailTemplateGenerator {
           </div>
           ` : ''}
 
-          <!-- Motivation -->
-          <div class="content-section">
-            <h3 style="color: white; margin-bottom: 15px;">Keep the Fire Burning</h3>
-            <p style="color: #D1D5DB; line-height: 1.6; margin-bottom: 15px;">
-              You're building an unstoppable habit of success. Each day you show up, you're proving to yourself that you can achieve anything you set your mind to.
-            </p>
-            <div style="background-color: rgba(0, 207, 255, 0.1); border-left: 4px solid #00CFFF; padding: 15px; margin: 15px 0;">
-              <p style="color: #00CFFF; margin: 0; font-style: italic;">
-                "Success is the sum of small efforts repeated day in and day out." - Robert Collier
-              </p>
-            </div>
-          </div>
-
           <!-- Call to Action -->
           <div class="content-section" style="text-align: center;">
             <h3 style="color: white; margin-bottom: 15px;">Ready for Day ${currentStreak + 1}?</h3>
@@ -478,30 +464,6 @@ export class EmailTemplateGenerator {
             </div>
           </div>
 
-          <!-- Achievement Details -->
-          <div class="content-section">
-            <h3 style="color: white; margin-bottom: 20px;">What This Achievement Means</h3>
-            <p style="color: #D1D5DB; line-height: 1.6; margin-bottom: 20px;">
-              You didn't just complete a goal - you proved to yourself that you can follow through on your commitments. 
-              This is the foundation of all future success.
-            </p>
-            
-            <div style="display: grid; gap: 12px;">
-              <div style="background-color: rgba(0, 207, 255, 0.1); border-radius: 8px; padding: 15px;">
-                <strong style="color: #00CFFF;">Discipline Built:</strong>
-                <span style="color: #D1D5DB;"> You've strengthened your ability to see things through</span>
-              </div>
-              <div style="background-color: rgba(16, 185, 129, 0.1); border-radius: 8px; padding: 15px;">
-                <strong style="color: #10B981;">Confidence Gained:</strong>
-                <span style="color: #D1D5DB;"> You've proven you can achieve what you set out to do</span>
-              </div>
-              <div style="background-color: rgba(255, 214, 10, 0.1); border-radius: 8px; padding: 15px;">
-                <strong style="color: #FFD60A;">Momentum Created:</strong>
-                <span style="color: #D1D5DB;"> You're ready to tackle even bigger challenges</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Next Steps -->
           ${nextSuggestions && nextSuggestions.length > 0 ? `
           <div class="content-section">
@@ -544,7 +506,29 @@ export class EmailTemplateGenerator {
     `;
   }
 
-  // Helper methods
+  // Helper methods using native JavaScript
+  formatDate(date) {
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  getDaysBetween(date1, date2) {
+    const diffTime = Math.abs(date2 - date1);
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  formatRelativeDate(dateString) {
+    const days = this.getDaysBetween(new Date(dateString), new Date());
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return `${Math.floor(days / 30)} months ago`;
+  }
+
   getWeeklyMotivationalMessage(completedThisWeek, currentStreak) {
     if (completedThisWeek >= 3) {
       return "You're absolutely crushing it this week! Your dedication is inspiring.";
@@ -587,15 +571,6 @@ export class EmailTemplateGenerator {
     const maxSessions = Math.max(...weeklyActivity.map(day => day.sessions));
     const mostActiveDay = weeklyActivity.find(day => day.sessions === maxSessions);
     return mostActiveDay ? mostActiveDay.day : null;
-  }
-
-  formatRelativeDate(dateString) {
-    const days = differenceInDays(new Date(), parseISO(dateString));
-    if (days === 0) return 'today';
-    if (days === 1) return 'yesterday';
-    if (days < 7) return `${days} days ago`;
-    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-    return `${Math.floor(days / 30)} months ago`;
   }
 }
 
