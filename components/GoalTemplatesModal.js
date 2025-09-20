@@ -1,10 +1,10 @@
 // components/GoalTemplatesModal.js
 import { useState } from 'react';
-import { X, Target, Clock, TrendingUp, User, Briefcase, Heart, BookOpen, Zap, ChevronRight } from 'lucide-react';
+import { X, Target, Clock, TrendingUp, User, Briefcase, Heart, BookOpen, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function GoalTemplatesModal({ isOpen, onClose, onSelectTemplate }) {
   const [selectedCategory, setSelectedCategory] = useState('fitness');
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [expandedTemplate, setExpandedTemplate] = useState(null);
 
   if (!isOpen) return null;
 
@@ -360,126 +360,177 @@ export default function GoalTemplatesModal({ isOpen, onClose, onSelectTemplate }
 
   const currentTemplates = templates[selectedCategory] || [];
 
+  const toggleTemplateExpansion = (templateId) => {
+    setExpandedTemplate(expandedTemplate === templateId ? null : templateId);
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0D1B2A] border border-gray-700 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex">
+      <div className="bg-[#0D1B2A] border border-gray-700 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         
-        {/* Left Sidebar - Categories */}
-        <div className="w-64 border-r border-gray-700 p-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-white">Goal Templates</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="space-y-2">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white">Goal Templates</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile: Horizontal Category Tabs */}
+        <div className="lg:hidden border-b border-gray-700">
+          <div className="flex overflow-x-auto scrollbar-hide">
             {categories.map((category) => {
               const IconComponent = category.icon;
               return (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setExpandedTemplate(null); // Reset expansion when switching categories
+                  }}
+                  className={`flex-shrink-0 flex flex-col items-center space-y-1 px-4 py-3 transition-colors ${
                     selectedCategory === category.id
-                      ? 'bg-[#00CFFF]/20 text-[#00CFFF]'
-                      : 'text-gray-300 hover:bg-gray-800'
+                      ? 'text-[#00CFFF] border-b-2 border-[#00CFFF]'
+                      : 'text-gray-400'
                   }`}
                 >
                   <IconComponent className={`w-5 h-5 ${
                     selectedCategory === category.id ? 'text-[#00CFFF]' : category.color
                   }`} />
-                  <span className="font-medium">{category.name}</span>
+                  <span className="text-xs font-medium whitespace-nowrap">{category.name}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Right Content - Templates */}
-        <div className="flex-1 flex flex-col">
-          <div className="p-6 border-b border-gray-700">
-            <h3 className="text-xl font-bold text-white">
-              {categories.find(c => c.id === selectedCategory)?.name} Templates
-            </h3>
-            <p className="text-gray-400 text-sm mt-1">
-              Choose a template to get started with structured milestones and KPIs
-            </p>
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden flex">
+          
+          {/* Desktop: Left Sidebar - Categories */}
+          <div className="hidden lg:block w-64 border-r border-gray-700 p-4">
+            <div className="space-y-2">
+              {categories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setExpandedTemplate(null);
+                    }}
+                    className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
+                      selectedCategory === category.id
+                        ? 'bg-[#00CFFF]/20 text-[#00CFFF]'
+                        : 'text-gray-300 hover:bg-gray-800'
+                    }`}
+                  >
+                    <IconComponent className={`w-5 h-5 ${
+                      selectedCategory === category.id ? 'text-[#00CFFF]' : category.color
+                    }`} />
+                    <span className="font-medium">{category.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid gap-4">
-              {currentTemplates.map((template) => (
-                <div
-                  key={template.id}
-                  className="border border-gray-700 rounded-xl p-6 hover:border-[#00CFFF]/50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedTemplate(template)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="text-lg font-semibold text-white mb-2">
-                        {template.title}
-                      </h4>
-                      <p className="text-gray-400 text-sm mb-3">
-                        {template.description}
-                      </p>
-                      <div className="flex items-center space-x-4 text-xs">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-500">{template.duration}</span>
+          {/* Templates List */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 lg:p-6">
+              <div className="space-y-4">
+                {currentTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="border border-gray-700 rounded-xl overflow-hidden"
+                  >
+                    {/* Template Header - Always Visible */}
+                    <div 
+                      className="p-4 lg:p-6 cursor-pointer hover:bg-gray-800/30 transition-colors"
+                      onClick={() => toggleTemplateExpansion(template.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-lg font-semibold text-white mb-2">
+                            {template.title}
+                          </h4>
+                          <p className="text-gray-400 text-sm mb-3">
+                            {template.description}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs">
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-500">{template.duration}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <TrendingUp className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-500">{template.difficulty}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <TrendingUp className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-500">{template.difficulty}</span>
+                        <div className="ml-4 flex-shrink-0">
+                          {expandedTemplate === template.id ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-500" />
+
+                    {/* Expanded Template Details */}
+                    {expandedTemplate === template.id && (
+                      <div className="border-t border-gray-700 p-4 lg:p-6 bg-gray-800/20">
+                        <div className="space-y-6">
+                          {/* Overview */}
+                          <div>
+                            <h5 className="text-white font-medium mb-2">Overview</h5>
+                            <p className="text-gray-300 text-sm leading-relaxed">
+                              {template.framework.overview}
+                            </p>
+                          </div>
+
+                          {/* Milestones */}
+                          <div>
+                            <h5 className="text-white font-medium mb-3">Key Milestones</h5>
+                            <div className="space-y-2">
+                              {template.framework.milestones.map((milestone, index) => (
+                                <div key={index} className="flex items-start space-x-2">
+                                  <Target className="w-3 h-3 text-[#00CFFF] mt-1 flex-shrink-0" />
+                                  <span className="text-gray-300 text-sm">{milestone}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Success Metrics */}
+                          <div>
+                            <h5 className="text-white font-medium mb-3">Success Metrics</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {template.framework.kpis.map((kpi, index) => (
+                                <div key={index} className="text-gray-300 text-sm">
+                                  • {kpi}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Use Template Button */}
+                          <button
+                            onClick={() => handleSelectTemplate(template)}
+                            className="w-full bg-[#00CFFF] text-[#0D1B2A] py-3 px-4 rounded-lg font-semibold hover:bg-[#00CFFF]/90 transition-colors"
+                          >
+                            Use This Template
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {selectedTemplate?.id === template.id && (
-                    <div className="border-t border-gray-700 pt-4 mt-4 space-y-4">
-                      <div>
-                        <h5 className="text-white font-medium mb-2">Overview</h5>
-                        <p className="text-gray-300 text-sm">{template.framework.overview}</p>
-                      </div>
-
-                      <div>
-                        <h5 className="text-white font-medium mb-2">Key Milestones</h5>
-                        <div className="space-y-2">
-                          {template.framework.milestones.map((milestone, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <Target className="w-3 h-3 text-[#00CFFF]" />
-                              <span className="text-gray-300 text-sm">{milestone}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h5 className="text-white font-medium mb-2">Success Metrics</h5>
-                        <div className="grid grid-cols-2 gap-2">
-                          {template.framework.kpis.map((kpi, index) => (
-                            <div key={index} className="text-gray-300 text-sm">
-                              • {kpi}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleSelectTemplate(template)}
-                        className="w-full bg-[#00CFFF] text-[#0D1B2A] py-3 rounded-lg font-semibold hover:bg-[#00CFFF]/90 transition-colors"
-                      >
-                        Use This Template
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
