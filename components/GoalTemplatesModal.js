@@ -389,7 +389,7 @@ export default function GoalTemplatesModal({ isOpen, onClose, onSelectTemplate }
                   key={category.id}
                   onClick={() => {
                     setSelectedCategory(category.id);
-                    setExpandedTemplate(null); // Reset expansion when switching categories
+                    setExpandedTemplate(null);
                   }}
                   className={`flex-shrink-0 flex flex-col items-center space-y-1 px-4 py-3 transition-colors ${
                     selectedCategory === category.id
